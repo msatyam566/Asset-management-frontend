@@ -85,7 +85,7 @@ const CategoryDetailsStaff = () => {
             className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
             onClick={() => console.log("Add Category button clicked")}
           >
-            
+            Add category
           </button>
         </div>
 
