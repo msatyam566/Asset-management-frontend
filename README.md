@@ -1,4 +1,4 @@
-#Asset management frontend 
+# Asset management frontend 
 
 React + Vite Starter Template
 
@@ -97,11 +97,7 @@ yarn dev
 Your app should now be running at http://localhost:5173.
 
 
-
-
----
-
-Available Scripts
+# Available Scripts
 
 In the project directory, you can run:
 
@@ -121,8 +117,7 @@ npm run lint
 
 Checks your code for errors and formatting issues using ESLint.
 
- # Documentation
 
-Support
+# Support
 
 If you encounter any issues, feel free to open an issue in this repository or reach out at satyam28147@gmail.com.
