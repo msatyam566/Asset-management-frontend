@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const Sidebar = ({ role }) => {
+
   const links = {
     admin: [
       { path: '/admin', label: 'Dashboard', icon: '📊' },
@@ -25,6 +26,15 @@ const Sidebar = ({ role }) => {
 
     ],
   };
+
+
+    if (!links[role]) {
+    return (
+      <div className="bg-gray-800 text-white h-screen p-4">
+        <p className="text-center">Invalid Role</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-800 text-white h-screen p-4 flex flex-col transition-all duration-300  w-16 md:w-64">
