@@ -7,6 +7,8 @@ const Sidebar = ({ role }) => {
       { path: '/admin', label: 'Dashboard', icon: '📊' },
       { path: '/admin/users', label: 'User Details', icon: '👥' },
       { path: '/admin/products', label: 'Product Details', icon: '📦' },
+      { path: '/admin/sales', label: 'Sales Details', icon: '💰' },
+      { path: '/admin/invoices', label: 'Invoices', icon: '🧾' },
 
     ],
     shopOwner: [
@@ -21,8 +23,10 @@ const Sidebar = ({ role }) => {
     staff: [
       { path: '/staff', label: 'Dashboard', icon: '📊' },
       { path: '/staff/products', label: 'Products', icon: '📦' },
-      { path: '/staff/category', label: 'Category Details', icon: '📂' }, 
+      { path: '/staff/category', label: 'Category Details', icon: '📂' },
+      { path: '/checkout', label: 'Checkout', icon: '🛒' }, 
       { path: '/staff/sales', label: 'Sales', icon: '💰' },
+
 
     ],
   };
@@ -37,7 +41,7 @@ const Sidebar = ({ role }) => {
   }
 
   return (
-    <div className="bg-gray-800 text-white h-screen p-4 flex flex-col transition-all duration-300  w-16 md:w-64">
+<div className="bg-gray-800 text-white min-h-screen p-4 flex flex-col transition-all duration-300 w-16 md:w-64">
       {/* Sidebar Links */}
       <ul className="space-y-5">
         {links[role]?.map((link) => (

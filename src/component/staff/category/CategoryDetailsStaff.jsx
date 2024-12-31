@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../sideBar/Layout";
+import Layout from "../../sideComponents/Layout";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../cards/ErrorCard";
+import ErrorCard from "../../cards/ErrorCard";
 
 const CategoryDetailsStaff = () => {
   const [categories, setCategories] = useState([]);
@@ -23,8 +23,10 @@ const CategoryDetailsStaff = () => {
             },
           }
         );
-        if (response) setCategories(response.data.category);
-        setFilteredCategories(response.data.category);
+        if (response) {
+          setCategories(response.data.category);
+          setFilteredCategories(response.data.category);
+        }
       } catch (error) {
         if (axios.isAxiosError(error)) {
           const status = error.response?.status;
@@ -52,7 +54,9 @@ const CategoryDetailsStaff = () => {
   // Handle delete
   const handleDelete = async (categoryId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/inventory/category/${categoryId}`);
+      await axios.delete(
+        `http://localhost:5000/api/inventory/category/${categoryId}`
+      );
       setCategories(
         categories.filter((category) => category.id !== categoryId)
       );

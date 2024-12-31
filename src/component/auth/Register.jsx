@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../cards/NotificationProvider";
 import axios from "axios";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,12 +15,29 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+
+  const { showNotification } = useNotification();
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validateMobile = (mobile) => {
+    const mobileRegex = /^[0-9]{10}$/; // Assumes 10-digit mobile numbers
+    return mobileRegex.test(mobile) ? "" : "Mobile number must be 10 digits";
+  };
+
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple email regex
+    return emailRegex.test(email) ? "" : "Invalid email address";
+  };
+
+
+  const validateName = (name) => {
+    return name.trim() !== "" ? "" : "Name cannot be empty";
   };
 
   const validatePassword = (password) => {
@@ -28,6 +46,7 @@ const Register = () => {
     const hasNumber = /[0-9]/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
+ 
     if (password.length < minLength)
       return "Password must be at least 7 characters long";
     if (!hasLowerCase)
@@ -42,16 +61,22 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setMessage("");
+    // Validate fields
+    const nameError = validateName(formData.name);
+    const mobileError = validateMobile(formData.mobile);
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+
+    if (nameError || emailError || mobileError || passwordError) {
+      showNotification(
+        nameError || emailError || mobileError || passwordError,
+        "error"
+      );
       return;
     }
 
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) {
-      setError(passwordError);
-      setMessage("");
+    if (formData.password !== formData.confirmPassword) {
+      showNotification("Passwords do not match", "error");
       return;
     }
 
@@ -66,15 +91,21 @@ const Register = () => {
         }
       );
       if (response) {
-        setMessage("Registration successful! Redirecting to login...");
-        setError("");
+        showNotification(
+          "Registration successful! Redirecting to login...",
+          "success"
+        );
         setTimeout(() => {
-          navigate("/login"); // Redirect to login page after successful registration
+          navigate("/login");
         }, 2000);
       }
     } catch (error) {
-      console.error(error);
-      setError("Failed to register. Please try again.");
+      console.error(error.response?.data?.data || error.message);
+      showNotification(
+        error.response?.data?.message ||
+          "Failed to register. Please try again.",
+        "error"
+      );
     }
   };
 
@@ -189,11 +220,10 @@ const Register = () => {
               className="absolute right-4 top-9 cursor-pointer text-gray-500 hover:text-gray-700"
               onClick={toggleConfirmPasswordVisibility}
             >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
             </span>
           </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          {message && <p className="text-green-500 text-sm mb-4">{message}</p>}
+      
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"

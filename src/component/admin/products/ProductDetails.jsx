@@ -1,81 +1,77 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../sideBar/Layout";
-import { useNavigate } from "react-router-dom";
-import {
-  PencilSquareIcon,
-  TrashIcon,
-  PlusIcon,
-} from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../cards/ErrorCard";
+import Layout from "../../sideComponents/Layout";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
+import ErrorCard from "../../cards/ErrorCard";
 
-const UserDetails = ({ setSelectedUserId }) => {
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+const ProductDetails = () => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false); // Modal visibility state
   const [userToDelete, setUserToDelete] = useState(null); // User to delete
 
-  const navigate = useNavigate();
-
   let token = localStorage.getItem("token");
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/admin/", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
-        setUsers(response.data.data);
-        setFilteredUsers(response.data.data);
+        const response = await axios.get(
+          "http://localhost:5000/api/admin/products",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
+
+        if (response) setProducts(response.data.productDetails);
+        setFilteredProducts(response.data.productDetails);
       } catch (error) {
-        setErrorMessage(error.response.data.message);
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          if (status >= 400 && status <= 500) {
+            setErrorMessage(error.response.data.message);
+          }
+        }
       }
     };
-    fetchUsers();
+    fetchProducts();
   }, []);
-
-  // handle pass a id to add shop component
-  const handleAddShop = (userId) => {
-    setSelectedUserId(userId); // Store the userId
-    navigate("/admin/users/add-shop");
-  };
 
   // Handle search
   const handleSearch = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
-    const filtered = users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(term.toLowerCase()) ||
-        user.role.toLowerCase().includes(term.toLowerCase())
+    const filtered = products.filter((product) =>
+      product.productName.toLowerCase().includes(term.toLowerCase())
     );
-    setFilteredUsers(filtered);
+    setFilteredProducts(filtered);
   };
-  // Handle delete with modal
+
   const confirmDelete = (userId) => {
     setUserToDelete(userId); // Store the userId to delete
     setShowModal(true); // Show the confirmation modal
   };
+
   // Handle delete
-  const handleDelete = async () => {
+  const handleDelete = async (userToDelete) => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin/${userToDelete}`, {
+      await axios.delete(`http://localhost:5000/api/inventory/product/${userToDelete}`,{
         headers: {
           Authorization: `${token}`, // Add the token to the headers
         },
       });
-      setUsers(users.filter((user) => user.id !== userToDelete));
-      setFilteredUsers(
-        filteredUsers.filter((user) => user.id !== userToDelete)
+
+      setProducts(products.filter((product) => product.id !== userToDelete));
+      setFilteredProducts(
+        filteredProducts.filter((product) => product.id !== userToDelete)
       );
       setShowModal(false);
       setUserToDelete(null);
     } catch (error) {
-      setErrorMessage(error.response.data.message);
+      console.error("Error deleting product", error);
     }
   };
 
@@ -91,63 +87,55 @@ const UserDetails = ({ setSelectedUserId }) => {
         <div className="flex flex-row justify-between items-center mb-4 gap-2">
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search by name"
             value={searchTerm}
             onChange={handleSearch}
             className="border p-2 rounded w-full md:w-1/3"
           />
-
-          <button
-            className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
-            onClick={() => navigate("/admin/users/add")} // Pass the user.id
-          >
-            Add user
-          </button>
         </div>
 
         {/* Responsive User Display */}
         <div className="block md:hidden">
           {/* Mobile view: Card-based design */}
-          {filteredUsers.map((user) => (
+          {filteredProducts.map((product) => (
             <div
-              key={user.id}
+              key={product.id}
               className="bg-white shadow-md rounded-md p-4 mb-4"
             >
               <div className="flex justify-between items-center mb-2">
                 <div>
-                  <h3 className="text-lg font-semibold">{user.name}</h3>
-                  <p className="text-gray-500">{user.email}</p>
-                  <p className="text-sm text-gray-400">Role: {user.role}</p>
+                  <h3 className="text-lg font-semibold">
+                    {product.productName}
+                  </h3>
+                  <p className="text-gray-500">{product.quantity}</p>
+                  <p className="text-sm text-gray-400">
+                    {" "}
+                    {product.description}
+                  </p>
+                  <p className="text-sm text-gray-400"> {product.price}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     className="text-green-500 hover:text-green-700 transition"
                     onClick={() =>
-                      console.log("Edit button clicked for user", user.id)
+                      console.log("Edit button clicked for product", product.id)
                     }
                   >
                     <PencilSquareIcon className="h-5 w-5" />
                   </button>
                   <button
                     className="text-red-500 hover:text-red-700 transition"
-                    onClick={() => confirmDelete(user.id)}
+                    onClick={() => confirmDelete(product.id)}
+
                   >
                     <TrashIcon className="h-5 w-5" />
                   </button>
-                  {user.shopId === null && (
-                    <button
-                      className="text-blue-500 hover:text-blue-700 transition"
-                      onClick={() => navigate("/admin/users/add-shop")}
-                    >
-                      <PlusIcon className="h-5 w-5" />
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           ))}
-          {filteredUsers.length === 0 && (
-            <p className="text-center text-gray-500 py-4">No users found.</p>
+          {filteredProducts.length === 0 && (
+            <p className="text-center text-gray-500 py-4">No products found.</p>
           )}
         </div>
 
@@ -161,61 +149,59 @@ const UserDetails = ({ setSelectedUserId }) => {
                     Name
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left">
-                    Email
+                    Quantity
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-left">
-                    Role
+                    Description
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Price
                   </th>
                   <th className="border border-gray-300 px-4 py-2 text-center">
-                    Actions
+                    Action
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                {filteredProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-4 py-2">
-                      {user.name}
+                      {product.productName}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {user.email}
+                      {product.quantity}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {user.role}
+                      {product.description}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {product.price}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 flex justify-center gap-4">
                       <button
                         className="text-green-500 hover:text-green-700 transition"
                         onClick={() =>
-                          console.log("Edit button clicked for user", user.id)
+                          console.log(
+                            "Edit button clicked for product",
+                            product.id
+                          )
                         }
                       >
                         <PencilSquareIcon className="h-5 w-5" />
                       </button>
                       <button
                         className="text-red-500 hover:text-red-700 transition"
-                        onClick={() => confirmDelete(user.id)}
-                      >
+                        onClick={() => confirmDelete(product.id)}
+                        >
                         <TrashIcon className="h-5 w-5" />
-                      </button>
-
-                      <button
-                        className={`bg-blue-500 text-white px-2 py-1 rounded shadow-md hover:bg-blue-600 transition duration-300 ${
-                          user.shopId
-                            ? "opacity-50 cursor-not-allowed pointer-events-none"
-                            : ""
-                        }`}
-                        onClick={() => handleAddShop(user.id)}
-                      >
-                        Add shop
                       </button>
                     </td>
                   </tr>
                 ))}
-                {filteredUsers.length === 0 && (
+                {filteredProducts.length === 0 && (
                   <tr>
                     <td colSpan="4" className="text-center text-gray-500 py-4">
-                      No users found.
+                      No products found.
                     </td>
                   </tr>
                 )}
@@ -224,13 +210,13 @@ const UserDetails = ({ setSelectedUserId }) => {
           </div>
         </div>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showModal && (
+      
+        {/* Delete Confirmation Modal */}
+        {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded shadow-lg p-6 w-1/3">
             <h3 className="text-lg font-semibold mb-4">
-              Are you sure you want to delete this user?
+              Are you sure you want to delete this product?
             </h3>
             <div className="flex justify-end gap-4">
               <button
@@ -253,4 +239,4 @@ const UserDetails = ({ setSelectedUserId }) => {
   );
 };
 
-export default UserDetails;
+export default ProductDetails;

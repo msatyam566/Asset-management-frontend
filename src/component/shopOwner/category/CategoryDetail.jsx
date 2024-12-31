@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Layout from "../../sideBar/Layout";
+import Layout from "../../sideComponents/Layout";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
 import ErrorCard from "../../cards/ErrorCard";
 

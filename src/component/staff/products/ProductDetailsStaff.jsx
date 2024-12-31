@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Layout from "../sideBar/Layout";
+import Layout from "../../sideComponents/Layout";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../cards/ErrorCard";
+import ErrorCard from "../../cards/ErrorCard";
 
 const ProductDetailsStaff = () => {
   const [products, setProducts] = useState([]);
@@ -92,7 +92,7 @@ const ProductDetailsStaff = () => {
             />
             <button
               className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
-              onClick={() => navigate("/staff/products/add")}
+              onClick={() => navigate("/products/add")}
             >
               +
             </button>

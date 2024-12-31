@@ -1,8 +1,8 @@
-import Layout from '../sideBar/Layout';
+import Layout from '../../sideComponents/Layout';
 
 const SalesDetails = () => {
   return (
-    <Layout role="staff">
+    <Layout role="shopOwner">
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-800">Sales Details</h1>

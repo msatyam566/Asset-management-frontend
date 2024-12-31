@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Layout from "../sideBar/Layout";
+import Layout from "../../sideComponents/Layout";
 import axios from "axios";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
 import { useNavigate } from 'react-router-dom';

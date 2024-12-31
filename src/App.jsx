@@ -1,31 +1,32 @@
 import { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { NotificationProvider } from "./component/cards/NotificationProvider";
+import Notification from "./component/cards/Notification";
 import Login from "./component/auth/Login";
 import Register from "./component/auth/Register";
 import Admin from "./component/admin/Admin";
 import ShopOwner from "./component/shopOwner/ShopOwnerDashboard";
 import Staff from "./component/staff/StaffDashboard";
 import OtpVerify from "./component/auth/OtpVerify";
-import UserDetails from "./component/admin/UserDetails";
-import ProductDetails from "./component/admin/ProductDetails";
-import ProductDetailsShop from "./component/shopOwner/ProductDetailsShop";
-import StaffDetails from "./component/shopOwner/StaffDetails";
-import Sales from "./component/shopOwner/SalesDetails";
-import Invoice from "./component/shopOwner/InvoiceDetails";
-import AddProduct from "./component/shopOwner/AddProduct";
-import AddUser from "./component/admin/AddUser";
-import AddStaff from "./component/shopOwner/addStaff";
-import AddShop from "./component/admin/AddShop";
+import UserDetails from "./component/admin/users/UserDetails";
+import ProductDetails from "./component/admin/products/ProductDetails";
+import ProductDetailsShop from "./component/shopOwner/products/ProductDetailsShop";
+import StaffDetails from "./component/shopOwner/staff/StaffDetails";
+import Sales from "./component/shopOwner/sales/SalesDetails";
+import Invoice from "./component/shopOwner/invoice/InvoiceDetails";
+import AddProduct from "./component/shopOwner/products/AddProduct";
+import AddUser from "./component/admin/users/AddUser";
+import AddStaff from "./component/shopOwner/staff/AddStaff";
+import AddShop from "./component/admin/users/AddShop";
 import CategoryDetails from "./component/shopOwner/category/CategoryDetail";
-import ProductDetailsStaff from "./component/staff/ProductDetailsStaff";
-import CategoryDetailsStaff from "./component/staff/CategoryDetailsStaff";
-import SalesDetails from "./component/staff/SalesDetails";
+import ProductDetailsStaff from "./component/staff/products/ProductDetailsStaff";
+import CategoryDetailsStaff from "./component/staff/category/CategoryDetailsStaff";
+import SalesDetails from "./component/staff/sales/SalesDetails";
 import PrivateRoute from "./utils/PrivateRoutes";
 import NotFound from "./utils/NotFound";
+import Checkout from "./component/checkout/Checkout";
+import AdminSalesDetails from "./component/admin/sales/AdminSalesDetails";
+import AdminInvoiceDetails from "./component/admin/invoice/AdminInvoiceDetails";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -71,14 +72,50 @@ function App() {
   return (
     <Router>
       <div className="App">
+      <NotificationProvider>
+      <Notification />
         <Routes>
           {/* Authentication Routes */}
-
-          <Route path="/verification" element={<OtpVerify />} />
+          <Route path="/verification" element={<OtpVerify onLogin={handleLogin}/>} />
           <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/login" element={<Login  />} />
 
-        
+          {/* Common Routes */}
+          {/* Checkout Route */}
+          <Route
+            path="/checkout"
+            element={
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+                allowedRoles={[ROLES.STAFF]}
+                role={role}
+              >
+                <Checkout />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/products/add"
+            element={
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+              >
+                <AddProduct />
+              </PrivateRoute>
+            }
+          />
+
+
+
+
+
+
+
+
+
+
+
+
 
           {/* Admin Routes */}
           <Route
@@ -141,16 +178,51 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/admin/sales"
+            element={
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+                allowedRoles={[ROLES.ADMIN]}
+                role={role}
+              >
+                <AdminSalesDetails />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/invoices"
+            element={
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+                allowedRoles={[ROLES.ADMIN]}
+                role={role}
+              >
+                <AdminInvoiceDetails />
+              </PrivateRoute>
+            }
+          />
+
+
+
+
+
+
+
+
+
+
 
           {/* ShopOwner Routes */}
-          
           <Route
             path="/shop-owner"
             element={
               <PrivateRoute
-                isAuthenticated={isAuthenticated && role === "SHOPOWNER"}
+                isAuthenticated={isAuthenticated}
+                allowedRoles={[ROLES.SHOPOWNER]}
+                role={role}
               >
-                <ShopOwner onLogout={handleLogout} />
+                <ShopOwner />
               </PrivateRoute>
             }
           />
@@ -190,16 +262,15 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route path="/shop-owner/invoices" element={<Invoice />} />
           <Route
-            path="/shop-owner/products/add"
+            path="/shop-owner/invoices"
             element={
               <PrivateRoute
                 isAuthenticated={isAuthenticated}
                 allowedRoles={[ROLES.SHOPOWNER]}
                 role={role}
               >
-                <AddProduct />
+                <Invoice />
               </PrivateRoute>
             }
           />
@@ -230,8 +301,8 @@ function App() {
 
 
 
-          {/* Staff Routes */}
 
+          {/* Staff Routes */}
           <Route
             path="/staff"
             element={
@@ -256,18 +327,7 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/staff/products/add"
-            element={
-              <PrivateRoute
-                isAuthenticated={isAuthenticated}
-                allowedRoles={[ROLES.STAFF]}
-                role={role}
-              >
-                <AddProduct />
-              </PrivateRoute>
-            }
-          />
+         
           <Route
             path="/staff/category"
             element={
@@ -292,13 +352,13 @@ function App() {
               </PrivateRoute>
             }
           />
-            {/* Not found Routes */}
-
-            <Route path="*" element={<NotFound />} />
-            
+          {/* Not found Routes */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
+        </NotificationProvider>
       </div>
     </Router>
+
   );
 }
 
