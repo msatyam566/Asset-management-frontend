@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../cards/NotificationProvider";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +15,8 @@ const AddProduct = () => {
     categoryId: "",
   });
   const [categories, setCategories] = useState([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const token = localStorage.getItem("token");
   // Fetch categories from API
@@ -29,9 +31,15 @@ const AddProduct = () => {
             },
           }
         );
-        setCategories(response.data.category);
+        if (response) {
+          setCategories(response.data.category);
+        }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        showNotification(
+          error.response?.data?.message ||
+            "Failed to fetch categories. Please try again.",
+          "error"
+        );
       }
     };
     fetchCategories();
@@ -79,8 +87,8 @@ const AddProduct = () => {
         }
       );
       console.log("Product Added:", response.data);
-      alert("Product added successfully!");
-      navigate("/shop-owner/products")
+      showNotification(response.data || "Product added successfully!","success");
+      navigate("/shop-owner/products");
       setFormData({
         productName: "",
         quantity: "",
@@ -93,13 +101,15 @@ const AddProduct = () => {
         categoryId: "",
       });
     } catch (error) {
-      console.error("Error adding product:", error);
-      alert("Failed to add product.");
+      showNotification(
+        error.response?.data?.message ||
+          "Failed to add products",
+        "error"
+      );
     }
   };
 
   console.log("Form Data:", formData);
-
 
   return (
     <div className="max-w-2xl mx-auto mt-5 bg-white shadow-lg rounded-lg p-6">

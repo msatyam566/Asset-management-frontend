@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../cards/NotificationProvider";
 
 
 const AddUser = () => {
@@ -12,6 +13,7 @@ const AddUser = () => {
     role: 'STAFF', // Default role
   });
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
 
   const handleChange = (e) => {
@@ -39,11 +41,11 @@ const AddUser = () => {
           if(response.data){
             navigate("/admin/users")
             console.log('Uer Added:', response.data);
-            alert('User added successfully!');
+            showNotification('User added successfully!');
           }
 
       console.log('Uer Added:', response.data);
-      alert('User added successfully!');
+      showNotification('User added successfully!');
       navigate()
       setFormData({
         name: '',
@@ -54,7 +56,7 @@ const AddUser = () => {
       });
     } catch (error) {
       console.error('Error adding shop owner:', error);
-      alert('Failed to add shop owner.');
+      showNotification('Failed to add user.');
     }
   };
 

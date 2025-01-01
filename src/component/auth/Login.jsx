@@ -10,8 +10,9 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate(); // React Router's navigation hook
   const [loading, setLoading] = useState(false);
-  const { showNotification } = useNotification();
   const [showPassword, setShowPassword] = useState(false);
+
+  const { showNotification } = useNotification();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

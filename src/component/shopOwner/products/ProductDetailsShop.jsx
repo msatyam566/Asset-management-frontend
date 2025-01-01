@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../cards/NotificationProvider";
 import axios from "axios";
 import Layout from "../../sideComponents/Layout";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../../cards/ErrorCard";
+import ConfirmationModal from "../../../utils/ConfirmationModal";
+import Pagination from "../../../utils/Pagination";
 
 const ProductDetailsShop = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [productToDelete, setproductToDelete] = useState(null); // User to delete
+  const [showModal, setShowModal] = useState(false); // Modal visibility state
+  const [currentPage, setCurrentPage] = useState(1); // Current page state
+  const [productsPerPage] = useState(5); // Number of users per page
+
   const navigate = useNavigate();
 
   let token = localStorage.getItem("token");
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,15 +33,18 @@ const ProductDetailsShop = () => {
           }
         );
 
-        if (response) setProducts(response.data.productDetails);
-        setFilteredProducts(response.data.productDetails);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const status = error.response?.status;
-          if (status >= 400 && status <= 500) {
-            setErrorMessage(error.response.data.message);
-          }
+        if (response) {
+          setProducts(response.data.data);
+          setFilteredProducts(response.data.data);
+          showNotification(response.data.message,"success");
         }
+      } catch (error) {
+        console.error(error.response?.data?.data || error.message);
+        showNotification(
+          error.response?.data?.message ||
+            "Failed to fetch products. Please try again.",
+          "error"
+        );
       }
     };
     fetchProducts();
@@ -43,43 +53,62 @@ const ProductDetailsShop = () => {
   const handleSearch = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
-    const filtered = products.filter(
-
-      (product) =>
-        product.productName
-      .toLowerCase().includes(term.toLowerCase())
+    const filtered = products.filter((product) =>
+      product.productName.toLowerCase().includes(term.toLowerCase())
     );
     setFilteredProducts(filtered);
   };
 
+  const confirmDelete = (userId) => {
+    setproductToDelete(userId); // Store the userId to delete
+    setShowModal(true); // Show the confirmation modal
+  };
+
   const handleDelete = async (productId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/inventory/product/${productId}`,
+      const response = await axios.delete(
+        `http://localhost:5000/api/inventory/product/${productId}`,
         {
-          
-            headers: {  
-              Authorization: `${token}`,
-            },
-          
+          headers: {
+            Authorization: `${token}`,
+          },
         }
       );
-      setProducts(products.filter((product) => product.id !== productId));
-      setFilteredProducts(
-        filteredProducts.filter((product) => product.id !== productId)
-      );
+      if (response) {
+        setProducts(
+          products.filter((product) => product.id !== productToDelete)
+        );
+        setFilteredProducts(
+          filteredProducts.filter((product) => product.id !== productToDelete)
+        );
+        setShowModal(false);
+        setproductToDelete(null);
+        showNotification("Product deleted successfully", "success");
+      }
     } catch (error) {
-      console.error("Error deleting user", error);
+      showNotification(
+        error.response.data.message || "Error in deleting product",
+        "error"
+      );
     }
   };
+
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <>
       <Layout role={"shopOwner"}>
-        <ErrorCard
-          message={errorMessage}
-          onClose={() => setErrorMessage("")}
-          position="top-right"
-        />
+
         <div className="container mx-auto p-4">
           {/* Search and Add Button */}
           <div className="flex flex-row justify-between items-center mb-4 gap-2">
@@ -94,14 +123,14 @@ const ProductDetailsShop = () => {
               className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
               onClick={() => navigate("/products/add")}
             >
-              +
+              Add product
             </button>
           </div>
 
           {/* Responsive User Display */}
           <div className="block md:hidden">
             {/* Mobile view: Card-based design */}
-            {filteredProducts.map((product) => (
+            {currentProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white shadow-md rounded-md p-4 mb-4"
@@ -132,7 +161,7 @@ const ProductDetailsShop = () => {
                     </button>
                     <button
                       className="text-red-500 hover:text-red-700 transition"
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => confirmDelete(product.id)}
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
@@ -140,7 +169,7 @@ const ProductDetailsShop = () => {
                 </div>
               </div>
             ))}
-            {filteredProducts.length === 0 && (
+            {currentProducts.length === 0 && (
               <p className="text-center text-gray-500 py-4">
                 No products found.
               </p>
@@ -171,7 +200,7 @@ const ProductDetailsShop = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((product) => (
+                  {currentProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-4 py-2">
                         {product.productName}
@@ -199,14 +228,14 @@ const ProductDetailsShop = () => {
                         </button>
                         <button
                           className="text-red-500 hover:text-red-700 transition"
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => confirmDelete(product.id)}
                         >
                           <TrashIcon className="h-5 w-5" />
                         </button>
                       </td>
                     </tr>
                   ))}
-                  {filteredProducts.length === 0 && (
+                  {currentProducts.length === 0 && (
                     <tr>
                       <td
                         colSpan="4"
@@ -221,6 +250,23 @@ const ProductDetailsShop = () => {
             </div>
           </div>
         </div>{" "}
+
+
+        {/* Pagination */}
+        {totalPages > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+          />
+        )}
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          showModal={showModal}
+          setShowModal={setShowModal}
+          onConfirm={handleDelete}
+          message="Are you sure you want to delete this product?"
+        />
       </Layout>
     </>
   );

@@ -12,7 +12,7 @@ const Notification = () => {
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 max-w-sm p-4 border rounded-lg shadow-md ${style}`}
+      className={`fixed top-3 right-4 z-50 max-w-sm p-4 border rounded-lg shadow-md ${style}`}
     >
       <p className="text-sm">{notification.message}</p>
     </div>

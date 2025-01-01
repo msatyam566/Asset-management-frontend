@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../sideComponents/Layout";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../../cards/ErrorCard";
+import { useNotification } from "../../cards/NotificationProvider";
+import Pagination from "../../../utils/Pagination";
 
 const CategoryDetails = () => {
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [currentPage, setCurrentPage] = useState(1); // Current page state
+  const [productsPerPage] = useState(5); // Number of users per page
+
 
   let token = localStorage.getItem("token");
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -23,15 +27,18 @@ const CategoryDetails = () => {
             },
           }
         );
-        if (response) setCategories(response.data.category);
-        setFilteredCategories(response.data.category);
+        if (response){
+          setCategories(response.data.category);
+          setFilteredCategories(response.data.category);
+          showNotification(response.data.message,"success");
+
+        } 
       } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const status = error.response?.status;
-          if (status >= 400 && status <= 500) {
-            setErrorMessage(error.response.data.message);
-          }
-        }
+        showNotification(
+          error.response?.data?.message ||
+            "Failed to fetch categories. Please try again.",
+          "error"
+        );
       }
     };
     fetchCategories();
@@ -52,25 +59,40 @@ const CategoryDetails = () => {
   // Handle delete
   const handleDelete = async (categoryId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/inventory/category/${categoryId}`);
-      setCategories(
-        categories.filter((category) => category.id !== categoryId)
-      );
-      setFilteredCategories(
-        filteredCategories.filter((category) => category.id !== categoryId)
-      );
+      const response = await axios.delete(`http://localhost:5000/api/inventory/category/${categoryId}`);
+      if(response){
+        setCategories(
+          categories.filter((category) => category.id !== categoryId)
+        );
+        setFilteredCategories(
+          filteredCategories.filter((category) => category.id !== categoryId)
+        );
+        showNotification(response.data.message,"success");
+      }
+      
     } catch (error) {
-      console.error("Error deleting category", error);
+      showNotification( error.response?.data?.message ||
+        "Failed to delete the category. Please try again.",
+      "error")
     }
   };
 
+    // Pagination logic
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    const currentCategories= filteredCategories.slice(
+      indexOfFirstProduct,
+      indexOfLastProduct
+    );
+  
+    const totalPages = Math.ceil(filteredCategories.length / productsPerPage);
+  
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+
   return (
     <Layout role="shopOwner">
-      <ErrorCard
-        message={errorMessage}
-        onClose={() => setErrorMessage("")}
-        position="top-right"
-      />
+      
       <div className="container mx-auto p-4">
         {/* Search and Add Button */}
         <div className="flex flex-row justify-between items-center mb-4 gap-2">
@@ -85,14 +107,14 @@ const CategoryDetails = () => {
             className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
             onClick={() => console.log("Add Category button clicked")}
           >
-            
+            Add category
           </button>
         </div>
 
         {/* Responsive Category Display */}
         <div className="block md:hidden">
           {/* Mobile view: Card-based design */}
-          {filteredCategories.map((category) => (
+          {currentCategories.map((category) => (
             <div
               key={category.id}
               className="bg-white shadow-md rounded-md p-4 mb-4"
@@ -128,7 +150,7 @@ const CategoryDetails = () => {
               </div>
             </div>
           ))}
-          {filteredCategories.length === 0 && (
+          {currentCategories.length === 0 && (
             <p className="text-center text-gray-500 py-4">
               No categories found.
             </p>
@@ -153,7 +175,7 @@ const CategoryDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredCategories.map((category) => (
+                {currentCategories.map((category) => (
                   <tr key={category.id} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-4 py-2">
                       {category.categoryName}
@@ -182,7 +204,7 @@ const CategoryDetails = () => {
                     </td>
                   </tr>
                 ))}
-                {filteredCategories.length === 0 && (
+                {currentCategories.length === 0 && (
                   <tr>
                     <td colSpan="3" className="text-center text-gray-500 py-4">
                       No categories found.
@@ -194,6 +216,14 @@ const CategoryDetails = () => {
           </div>
         </div>
       </div>
+      {/* Pagination */}
+      {totalPages > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            paginate={paginate}
+          />
+        )}
     </Layout>
   );
 };

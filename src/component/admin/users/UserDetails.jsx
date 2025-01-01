@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../../sideComponents/Layout";
+import { useNotification } from "../../cards/NotificationProvider";
 import { useNavigate } from "react-router-dom";
 import {
   PencilSquareIcon,
@@ -8,6 +9,9 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/solid"; // Heroicons
 import ErrorCard from "../../cards/ErrorCard";
+import Pagination from "../../../utils/Pagination";
+import ConfirmationModal from "../../../utils/ConfirmationModal";
+import UpdateModal from "../../../utils/UpdateModal";
 
 const UserDetails = ({ setSelectedUserId }) => {
   const [users, setUsers] = useState([]);
@@ -16,8 +20,13 @@ const UserDetails = ({ setSelectedUserId }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false); // Modal visibility state
   const [userToDelete, setUserToDelete] = useState(null); // User to delete
+  const [userToUpdate, setUserToUpdate] = useState(null); // use for update
+  const [currentPage, setCurrentPage] = useState(1); // Current page state
+  const [usersPerPage] = useState(5); // Number of users per page
+  const [showupdateModal, setShowupdateModal] = useState(false);
 
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   let token = localStorage.getItem("token");
 
@@ -29,10 +38,19 @@ const UserDetails = ({ setSelectedUserId }) => {
             Authorization: `${token}`,
           },
         });
-        setUsers(response.data.data);
-        setFilteredUsers(response.data.data);
+        if (response) {
+          setUsers(response.data.data);
+          setFilteredUsers(response.data.data);
+          showNotification(response.data.message, "success");
+        }
       } catch (error) {
-        setErrorMessage(error.response.data.message);
+        console.log(error);
+        console.error(error.response?.data?.data || error.message);
+        showNotification(
+          error.response?.data?.message ||
+            "Failed to fetch users. Please try again.",
+          "error"
+        );
       }
     };
     fetchUsers();
@@ -54,6 +72,7 @@ const UserDetails = ({ setSelectedUserId }) => {
         user.role.toLowerCase().includes(term.toLowerCase())
     );
     setFilteredUsers(filtered);
+    setCurrentPage(1);
   };
   // Handle delete with modal
   const confirmDelete = (userId) => {
@@ -63,21 +82,89 @@ const UserDetails = ({ setSelectedUserId }) => {
   // Handle delete
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin/${userToDelete}`, {
-        headers: {
-          Authorization: `${token}`, // Add the token to the headers
-        },
-      });
-      setUsers(users.filter((user) => user.id !== userToDelete));
-      setFilteredUsers(
-        filteredUsers.filter((user) => user.id !== userToDelete)
+      const response = await axios.delete(
+        `http://localhost:5000/api/admin/${userToDelete}`,
+        {
+          headers: {
+            Authorization: `${token}`, // Add the token to the headers
+          },
+        }
       );
-      setShowModal(false);
-      setUserToDelete(null);
+      if (response) {
+        setUsers(users.filter((user) => user.id !== userToDelete));
+        setFilteredUsers(
+          filteredUsers.filter((user) => user.id !== userToDelete)
+        );
+        setShowModal(false);
+        setUserToDelete(null);
+        showNotification("User deleted successfully", "success");
+      }
     } catch (error) {
-      setErrorMessage(error.response.data.message);
+      showNotification(
+        error.response.data.message || "Error in deleting user",
+        "error"
+      );
     }
   };
+
+  const handleUpdateUser = async (user) => {
+    const fieldsToUpdate={
+      id:user.id,
+      name:user.name,
+      email:user.email,
+      mobile:user.mobile,
+    }
+    setUserToUpdate(fieldsToUpdate);
+    setShowupdateModal(true);
+  };
+
+  // Handle update
+  const handleUpdate = async (updatedUser) => {
+    try {
+
+      
+      const response = await axios.put(
+        `http://localhost:5000/api/admin/${updatedUser.id}`, 
+        updatedUser, // Send the updated data
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`, // Add the token to the headers
+          },
+        }
+      );
+      if (response) {
+        // Update users list with updated user data
+        setUsers(
+          users.map((user) =>
+            user.id === updatedUser.id ? { ...user, ...updatedUser } : user
+          )
+        );
+        setFilteredUsers(
+          filteredUsers.map((user) =>
+            user.id === updatedUser.id ? { ...user, ...updatedUser } : user
+          )
+        );
+        setShowupdateModal(false);
+        showNotification("User updated successfully", "success");
+      }
+    } catch (error) {
+      console.log(error);
+      showNotification("Failed to update user. Please try again.", "error");
+    }
+  };
+
+  // Pagination logic
+  const indexOfLastProduct = currentPage * usersPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - usersPerPage;
+  const currentUsers = filteredUsers.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <Layout role="admin">
@@ -108,7 +195,7 @@ const UserDetails = ({ setSelectedUserId }) => {
         {/* Responsive User Display */}
         <div className="block md:hidden">
           {/* Mobile view: Card-based design */}
-          {filteredUsers.map((user) => (
+          {currentUsers.map((user) => (
             <div
               key={user.id}
               className="bg-white shadow-md rounded-md p-4 mb-4"
@@ -122,9 +209,7 @@ const UserDetails = ({ setSelectedUserId }) => {
                 <div className="flex gap-2">
                   <button
                     className="text-green-500 hover:text-green-700 transition"
-                    onClick={() =>
-                      console.log("Edit button clicked for user", user.id)
-                    }
+                    onClick={() => handleUpdateUser(user)}
                   >
                     <PencilSquareIcon className="h-5 w-5" />
                   </button>
@@ -146,7 +231,7 @@ const UserDetails = ({ setSelectedUserId }) => {
               </div>
             </div>
           ))}
-          {filteredUsers.length === 0 && (
+          {currentUsers.length === 0 && (
             <p className="text-center text-gray-500 py-4">No users found.</p>
           )}
         </div>
@@ -172,7 +257,7 @@ const UserDetails = ({ setSelectedUserId }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {currentUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-4 py-2">
                       {user.name}
@@ -186,9 +271,7 @@ const UserDetails = ({ setSelectedUserId }) => {
                     <td className="border border-gray-300 px-4 py-2 flex justify-center gap-4">
                       <button
                         className="text-green-500 hover:text-green-700 transition"
-                        onClick={() =>
-                          console.log("Edit button clicked for user", user.id)
-                        }
+                        onClick={() => handleUpdateUser(user)}
                       >
                         <PencilSquareIcon className="h-5 w-5" />
                       </button>
@@ -212,7 +295,7 @@ const UserDetails = ({ setSelectedUserId }) => {
                     </td>
                   </tr>
                 ))}
-                {filteredUsers.length === 0 && (
+                {currentUsers.length === 0 && (
                   <tr>
                     <td colSpan="4" className="text-center text-gray-500 py-4">
                       No users found.
@@ -225,30 +308,32 @@ const UserDetails = ({ setSelectedUserId }) => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded shadow-lg p-6 w-1/3">
-            <h3 className="text-lg font-semibold mb-4">
-              Are you sure you want to delete this user?
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+      {/*update modal */}
+
+      <UpdateModal
+        showupdateModal={showupdateModal}
+        setShowupdateModal={setShowupdateModal}
+        onUpdate={handleUpdate}
+        data={userToUpdate} // Pass user data to the modal
+        title="Update User Information"
+      />
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          paginate={paginate}
+        />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        showModal={showModal}
+        setShowModal={setShowModal}
+        onConfirm={handleDelete}
+        message="Are you sure you want to delete this user?"
+      />
     </Layout>
   );
 };
