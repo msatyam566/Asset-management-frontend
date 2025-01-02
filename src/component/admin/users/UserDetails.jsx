@@ -8,7 +8,6 @@ import {
   TrashIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid"; // Heroicons
-import ErrorCard from "../../cards/ErrorCard";
 import Pagination from "../../../utils/Pagination";
 import ConfirmationModal from "../../../utils/ConfirmationModal";
 import UpdateModal from "../../../utils/UpdateModal";
@@ -17,7 +16,6 @@ const UserDetails = ({ setSelectedUserId }) => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false); // Modal visibility state
   const [userToDelete, setUserToDelete] = useState(null); // User to delete
   const [userToUpdate, setUserToUpdate] = useState(null); // use for update
@@ -41,7 +39,7 @@ const UserDetails = ({ setSelectedUserId }) => {
         if (response) {
           setUsers(response.data.data);
           setFilteredUsers(response.data.data);
-          showNotification(response.data.message, "success");
+          showNotification(response.data.message || "Users fetched success","success");
         }
       } catch (error) {
         console.log(error);
@@ -157,10 +155,10 @@ const UserDetails = ({ setSelectedUserId }) => {
   // Pagination logic
   const indexOfLastProduct = currentPage * usersPerPage;
   const indexOfFirstProduct = indexOfLastProduct - usersPerPage;
-  const currentUsers = filteredUsers.slice(
+  const currentUsers = filteredUsers.length ? filteredUsers.slice(
     indexOfFirstProduct,
     indexOfLastProduct
-  );
+  ):[];
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
@@ -168,11 +166,7 @@ const UserDetails = ({ setSelectedUserId }) => {
 
   return (
     <Layout role="admin">
-      <ErrorCard
-        message={errorMessage}
-        onClose={() => setErrorMessage("")}
-        position="top-right"
-      />
+  
       <div className="container mx-auto p-4">
         {/* Search and Add Button */}
         <div className="flex flex-row justify-between items-center mb-4 gap-2">

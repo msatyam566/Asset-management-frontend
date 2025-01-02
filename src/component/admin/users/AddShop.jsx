@@ -1,10 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
-import ErrorCard from "../../cards/ErrorCard";
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../cards/NotificationProvider";
 
 const AddShop = ({ userId }) => {
-  const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
     userId: userId,
     name: "",
@@ -12,6 +11,7 @@ const AddShop = ({ userId }) => {
   });
 
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const handleChange = (e) => {
     setFormData({
@@ -35,28 +35,27 @@ const AddShop = ({ userId }) => {
       );
 
       if (response.data) {
-        navigate("/admin/users");
-        console.log("Shop Added:", response.data);
-        alert("Shop added successfully!");
-      }
+        showNotification(
+          response.data || "Shop added successfully!",
+          "success"
+        );
 
-      setFormData({
-        name: "",
-        userId: userId,
-        role: "SHOPOWNER", // Reset to default
-      });
+        setTimeout(() => {
+          navigate("/admin/users");
+        }, 2000);
+        setFormData({
+          name: "",
+          userId: userId,
+          role: "SHOPOWNER", // Reset to default
+        });
+      }
     } catch (error) {
-      setErrorMessage(error.response.data.message);
+      showNotification(error.response.data.message || "Failed to add shop.","error");
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
-      <ErrorCard
-        message={errorMessage}
-        onClose={() => setErrorMessage("")}
-        position="top-right"
-      />
       <h2 className="text-2xl font-bold text-center text-blue-500 mb-6">
         Add shop to user
       </h2>

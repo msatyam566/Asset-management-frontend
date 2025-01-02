@@ -36,7 +36,7 @@ const ProductDetailsShop = () => {
         if (response) {
           setProducts(response.data.data);
           setFilteredProducts(response.data.data);
-          showNotification(response.data.message,"success");
+          showNotification(response.data.message, "success");
         }
       } catch (error) {
         console.error(error.response?.data?.data || error.message);
@@ -59,8 +59,8 @@ const ProductDetailsShop = () => {
     setFilteredProducts(filtered);
   };
 
-  const confirmDelete = (userId) => {
-    setproductToDelete(userId); // Store the userId to delete
+  const confirmDelete = (productId) => {
+    setproductToDelete(productId); // Store the productId to delete
     setShowModal(true); // Show the confirmation modal
   };
 
@@ -96,10 +96,9 @@ const ProductDetailsShop = () => {
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
+  const currentProducts = filteredProducts.length
+  ? filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct)
+  : [];
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
@@ -108,7 +107,6 @@ const ProductDetailsShop = () => {
   return (
     <>
       <Layout role={"shopOwner"}>
-
         <div className="container mx-auto p-4">
           {/* Search and Add Button */}
           <div className="flex flex-row justify-between items-center mb-4 gap-2">
@@ -119,7 +117,7 @@ const ProductDetailsShop = () => {
               onChange={handleSearch}
               className="border p-2 rounded w-full md:w-1/3"
             />
-            <button
+             <button
               className="bg-blue-500 text-white px-4 rounded shadow-md hover:bg-blue-600 transition duration-300 h-12 flex items-center"
               onClick={() => navigate("/products/add")}
             >
@@ -250,8 +248,6 @@ const ProductDetailsShop = () => {
             </div>
           </div>
         </div>{" "}
-
-
         {/* Pagination */}
         {totalPages > 0 && (
           <Pagination

@@ -27,6 +27,7 @@ import NotFound from "./utils/NotFound";
 import Checkout from "./component/checkout/Checkout";
 import AdminSalesDetails from "./component/admin/sales/AdminSalesDetails";
 import AdminInvoiceDetails from "./component/admin/invoice/AdminInvoiceDetails";
+import AddCategory from "./component/shopOwner/category/AddCategory";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -101,6 +102,16 @@ function App() {
                 isAuthenticated={isAuthenticated}
               >
                 <AddProduct />
+              </PrivateRoute>
+            }
+          />
+           <Route
+            path="/category/add"
+            element={
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+              >
+                <AddCategory />
               </PrivateRoute>
             }
           />

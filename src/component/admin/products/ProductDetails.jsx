@@ -94,10 +94,10 @@ const ProductDetails = () => {
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
+  const currentProducts = filteredProducts.length ? filteredProducts.slice(
     indexOfFirstProduct,
     indexOfLastProduct
-  );
+  ):[];
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 

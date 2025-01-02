@@ -32,7 +32,8 @@ const AddProduct = () => {
           }
         );
         if (response) {
-          setCategories(response.data.category);
+          console.log(response.data.data);
+          setCategories(response.data.data);
         }
       } catch (error) {
         showNotification(
@@ -87,8 +88,8 @@ const AddProduct = () => {
         }
       );
       console.log("Product Added:", response.data);
-      showNotification(response.data || "Product added successfully!","success");
-      navigate("/shop-owner/products");
+      showNotification(response.data.data.message || "Product added successfully!","success");
+      
       setFormData({
         productName: "",
         quantity: "",
@@ -109,7 +110,6 @@ const AddProduct = () => {
     }
   };
 
-  console.log("Form Data:", formData);
 
   return (
     <div className="max-w-2xl mx-auto mt-5 bg-white shadow-lg rounded-lg p-6">
@@ -276,10 +276,19 @@ const AddProduct = () => {
         </div>
 
         {/* Submit Button */}
-        <div>
+        <div className="flex justify-between gap-4 mt-3">
+          <button
+            type="button"
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            onClick={() => {
+              navigate("/shop-owner/products");
+            }}
+          >
+            Back
+          </button>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Add Product
           </button>
